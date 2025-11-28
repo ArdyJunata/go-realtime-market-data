@@ -6,13 +6,13 @@ import (
 )
 
 type repository struct {
-	mongoDb *mongo.Client
-	redis   *redis.Client
+	mongo *mongo.Client
+	redis *redis.Client
 }
 
 func NewRepository(mongoDb *mongo.Client, redis *redis.Client) *repository {
 	return &repository{
-		mongoDb: mongoDb,
-		redis:   redis,
+		mongo: mongoDb,
+		redis: redis,
 	}
 }

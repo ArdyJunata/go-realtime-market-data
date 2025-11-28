@@ -8,14 +8,10 @@ import (
 
 	"github.com/ArdyJunata/go-realtime-market-data/internal/config"
 	"github.com/ArdyJunata/go-realtime-market-data/internal/entity"
+	"github.com/ArdyJunata/go-realtime-market-data/pkg/constant"
 	"github.com/ArdyJunata/go-realtime-market-data/pkg/database"
 	"github.com/ArdyJunata/go-realtime-market-data/pkg/logger"
 	"github.com/gorilla/websocket"
-)
-
-const (
-	BinanceWS = "wss://stream.binance.com:9443/ws/btcusdt@aggTrade"
-	RedisChan = "market_trades"
 )
 
 func main() {
@@ -31,8 +27,8 @@ func main() {
 	}
 
 	for {
-		logger.Log.Infof(ctx, "Connecting to Binance: %s", BinanceWS)
-		conn, _, err := websocket.DefaultDialer.Dial(BinanceWS, nil)
+		logger.Log.Infof(ctx, "Connecting to Binance: %s", constant.BinanceWs)
+		conn, _, err := websocket.DefaultDialer.Dial(constant.BinanceWs, nil)
 		if err != nil {
 			logger.Log.Errorf(ctx, "Dial error: %v. Retrying in 5s...", err)
 			time.Sleep(5 * time.Second)
@@ -68,7 +64,7 @@ func main() {
 			}
 
 			payload, _ := json.Marshal(cleanTrade)
-			if err := redis.Publish(ctx, RedisChan, payload).Err(); err != nil {
+			if err := redis.Publish(ctx, constant.RedisChannelMarketTrades, payload).Err(); err != nil {
 				logger.Log.Errorf(ctx, "Redis Publish Failed: %v", err)
 			}
 
