@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"github.com/ArdyJunata/go-realtime-market-data/internal/entity"
 	"github.com/ArdyJunata/go-realtime-market-data/pkg/logger"
@@ -27,4 +28,24 @@ func (u *service) ProcessTradeEvent(ctx context.Context, payload string) error {
 	}
 
 	return nil
+}
+
+func (u *service) GetPriceSnapshot(ctx context.Context, symbol string) (*PriceSnapshot, error) {
+	cleanSymbol := strings.ToUpper(symbol)
+
+	price, err := u.repository.GetLastPrice(ctx, cleanSymbol)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PriceSnapshot{
+		Symbol: cleanSymbol,
+		Price:  price,
+	}, nil
+}
+
+func (u *service) GetTrades(ctx context.Context, symbol string) ([]entity.Trade, error) {
+	cleanSymbol := strings.ToUpper(symbol)
+
+	return u.repository.GetRecentTrades(ctx, cleanSymbol, 50)
 }

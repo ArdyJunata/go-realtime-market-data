@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -41,7 +40,7 @@ func main() {
 
 	repo := repository.NewRepository(mongo, redis)
 	service := service.NewService(repo)
-	_ = handler.NewHandler(service)
+	handler := handler.NewHandler(service)
 
 	router := fiber.New(fiber.Config{
 		AppName:        "Realtime Market Data",
@@ -56,10 +55,8 @@ func main() {
 
 	api := router.Group("/api/v1")
 	{
-		api.Get("/health", func(c *fiber.Ctx) error {
-			fmt.Println("OK")
-			return nil
-		})
+		api.Get("/price/:symbol", handler.GetPriceSnapshot)
+		api.Get("/trades/:symbol", handler.GetTrades)
 	}
 
 	go func() {
