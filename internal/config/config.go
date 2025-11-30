@@ -7,7 +7,7 @@ import (
 )
 
 func LoadConfig(file string) {
-	godotenv.Load(file)
+	_ = godotenv.Load(file)
 }
 
 func GetString(key ConfigKey) string {
