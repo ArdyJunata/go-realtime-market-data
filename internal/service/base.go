@@ -11,6 +11,7 @@ type Repository interface {
 	UpdateLastPrice(ctx context.Context, trade entity.Trade) error
 	GetLastPrice(ctx context.Context, symbol string) (float64, error)
 	GetRecentTrades(ctx context.Context, symbol string, limit int64) ([]entity.Trade, error)
+	SubscribeTrades(ctx context.Context) <-chan string
 }
 
 func NewService(repository Repository) *service {

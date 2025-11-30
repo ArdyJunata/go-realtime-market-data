@@ -8,11 +8,12 @@ import (
 	"time"
 
 	"github.com/ArdyJunata/go-realtime-market-data/internal/config"
-	"github.com/ArdyJunata/go-realtime-market-data/internal/handler.go"
+	"github.com/ArdyJunata/go-realtime-market-data/internal/handler"
 	"github.com/ArdyJunata/go-realtime-market-data/internal/repository"
 	"github.com/ArdyJunata/go-realtime-market-data/internal/service"
 	"github.com/ArdyJunata/go-realtime-market-data/pkg/database"
 	"github.com/ArdyJunata/go-realtime-market-data/pkg/logger"
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	fiberlogger "github.com/gofiber/fiber/v2/middleware/logger"
@@ -20,7 +21,8 @@ import (
 )
 
 func main() {
-	config.LoadConfig("../../.env")
+	config.LoadConfig(".env")
+
 	logger.InitLogger()
 	ctx := context.Background()
 
@@ -40,7 +42,16 @@ func main() {
 
 	repo := repository.NewRepository(mongo, redis)
 	service := service.NewService(repo)
-	handler := handler.NewHandler(service)
+	hub := handler.NewHub()
+	handler := handler.NewHandler(service, hub)
+
+	go func() {
+		logger.Log.Infof(ctx, "Starting Data Pipeline: Redis -> Service -> Hub")
+		streamChan := service.GetTradeStream(ctx)
+		for msg := range streamChan {
+			hub.Broadcast([]byte(msg))
+		}
+	}()
 
 	router := fiber.New(fiber.Config{
 		AppName:        "Realtime Market Data",
@@ -58,6 +69,16 @@ func main() {
 		api.Get("/price/:symbol", handler.GetPriceSnapshot)
 		api.Get("/trades/:symbol", handler.GetTrades)
 	}
+
+	router.Use("/ws", func(c *fiber.Ctx) error {
+		if websocket.IsWebSocketUpgrade(c) {
+			c.Locals("allowed", true)
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
+
+	router.Get("/ws", websocket.New(handler.HandleWebSocket))
 
 	go func() {
 		logger.Log.Infof(ctx, "Server listening on port 8080")

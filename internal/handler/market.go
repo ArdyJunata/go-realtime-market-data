@@ -1,6 +1,9 @@
 package handler
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/contrib/websocket"
+	"github.com/gofiber/fiber/v2"
+)
 
 func (h *handler) GetPriceSnapshot(c *fiber.Ctx) error {
 	symbol := c.Params("symbol")
@@ -29,4 +32,15 @@ func (h *handler) GetTrades(c *fiber.Ctx) error {
 		"count":  len(trades),
 		"data":   trades,
 	})
+}
+
+func (h *handler) HandleWebSocket(c *websocket.Conn) {
+	h.hub.Register(c)
+	defer h.hub.Unregister(c)
+
+	for {
+		if _, _, err := c.ReadMessage(); err != nil {
+			break
+		}
+	}
 }

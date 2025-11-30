@@ -49,3 +49,7 @@ func (u *service) GetTrades(ctx context.Context, symbol string) ([]entity.Trade,
 
 	return u.repository.GetRecentTrades(ctx, cleanSymbol, 50)
 }
+
+func (u *service) GetTradeStream(ctx context.Context) <-chan string {
+	return u.repository.SubscribeTrades(ctx)
+}

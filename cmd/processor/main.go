@@ -15,7 +15,8 @@ import (
 )
 
 func main() {
-	config.LoadConfig("../../.env")
+	config.LoadConfig(".env")
+
 	logger.InitLogger()
 	ctx := context.Background()
 

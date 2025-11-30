@@ -59,3 +59,21 @@ func (r *repository) GetRecentTrades(ctx context.Context, symbol string, limit i
 
 	return trades, nil
 }
+
+func (r *repository) SubscribeTrades(ctx context.Context) <-chan string {
+	msgChan := make(chan string)
+
+	go func() {
+		pubsub := r.redis.Subscribe(ctx, constant.RedisChannelMarketTrades)
+		defer pubsub.Close()
+
+		ch := pubsub.Channel()
+
+		for msg := range ch {
+			msgChan <- msg.Payload
+		}
+		close(msgChan)
+	}()
+
+	return msgChan
+}
